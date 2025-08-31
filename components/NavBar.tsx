@@ -1,4 +1,3 @@
-// components/NavBar.tsx
 'use client';
 
 import { useState } from 'react';
@@ -9,6 +8,7 @@ const NavBar: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const router = useRouter();
 
+  // Here is the search parameter q , whose value is extracted in .\search\page.tsx
   const handleSearch = () => {
     if (searchTerm.trim()) {
       router.push(`/news/search?q=${encodeURIComponent(searchTerm.trim())}`);

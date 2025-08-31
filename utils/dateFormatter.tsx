@@ -1,4 +1,5 @@
 
+// Display how old the news article is. Like 5 hours ago or Just Now ..........
 export function formatDate(dateString: string): string {
     const date = new Date(dateString);
     const now = new Date();
@@ -21,6 +22,8 @@ export function formatDate(dateString: string): string {
     }
 }
 
+
+// Details about a single article implemented in details section ---> .\news\detail\[id]\page.tsx
 export function formatFullDate(dateString: string): string {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {

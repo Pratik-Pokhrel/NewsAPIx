@@ -2,7 +2,9 @@ import { fetchLatestNews } from '@/lib/newsAPI';
 import NewsList from '@/components/NewsList';
 import { NewsArticle } from '@/lib/types';
 
-export const revalidate = 300; // Revalidate every 5 minutes
+// Force dynamic rendering to always fetch fresh data on startup
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export default async function HomePage() {
   let articles: NewsArticle[] = [];
