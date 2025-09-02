@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 
 const NavBar: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -33,9 +34,18 @@ const NavBar: React.FC = () => {
           {/* Logo/Brand */}
           <div className="flex items-center">
             <Link href="/" className="flex-shrink-0 group">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent hover:from-purple-400 hover:to-pink-400 transition-all duration-300 group-hover:scale-105 transform">
-                NewsAPIx
-              </h1>
+              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-cyan-400 to-purple-400 p-0.5 transition-all duration-300 group-hover:scale-105 transform group-hover:shadow-lg group-hover:shadow-cyan-500/25">
+                <div className="w-full h-full rounded-full bg-slate-800 flex items-center justify-center">
+                  <Image
+                    src="/logo.png"
+                    alt="NewsAPIx Logo"
+                    width={32}
+                    height={32}
+                    className="rounded-full transition-all duration-300"
+                    priority
+                  />
+                </div>
+              </div>
             </Link>
           </div>
 
@@ -77,5 +87,4 @@ const NavBar: React.FC = () => {
     </nav>
   );
 };
-
 export default NavBar;

@@ -1,2 +1,23 @@
 # NewsAPIx
-A lightweight news application built with a free News API. The app displays the latest headlines on the home page, lets users view full details of a selected article, and includes a search feature to find news by keywords in titles.
+
+## Installation
+
+To install the project dependencies, run the following command:
+
+```
+npm install
+```
+
+## Usage
+
+To start the development server, run the following command:
+
+```
+npm run dev
+```
+
+This will start the Next.js development server and you can access the application at `http://localhost:3000`.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
