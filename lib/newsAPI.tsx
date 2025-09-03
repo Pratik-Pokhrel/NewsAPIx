@@ -9,7 +9,27 @@ if (!API_KEY) {
     throw new Error('NEXT_PUBLIC_NEWS_API_KEY is not defined in environment variables');
 }
 
+// Cache for storing search results and latest articles
+let articleCache = new Map<string, NewsArticle>();
+let cacheTimestamp = 0;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
+// Helper function to add articles to cache
+function addToCache(articles: NewsArticle[]) {
+    articles.forEach(article => {
+        articleCache.set(article.uuid, article);
+        // Also cache by URI if different from UUID
+        if (article.uri && article.uri !== article.uuid) {
+            articleCache.set(article.uri, article);
+        }
+    });
+    cacheTimestamp = Date.now();
+}
+
+// Helper function to check if cache is still valid
+function isCacheValid(): boolean {
+    return Date.now() - cacheTimestamp < CACHE_DURATION;
+}
 
 /**
  * Fetches the latest news articles.
@@ -84,7 +104,12 @@ export async function fetchLatestNews(limit: number = 20): Promise<NewsArticle[]
         }
 
         // Transform the raw NewsAPI.ai articles into a standardized NewsArticle format
-        return rawArticles.map(transformArticle).filter((a): a is NewsArticle => a !== null);
+        const articles = rawArticles.map(transformArticle).filter((a): a is NewsArticle => a !== null);
+
+        // Add to cache
+        addToCache(articles);
+
+        return articles;
     } catch (error) {
         console.error('Error fetching latest news:', error);
         throw new Error(`Failed to fetch latest news: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -163,7 +188,12 @@ export async function searchNewsByKeywords(query: string, limit: number = 20): P
             return await fallbackSearch(query, limit);
         }
 
-        return rawArticles.map(transformArticle).filter((a): a is NewsArticle => a !== null);
+        const articles = rawArticles.map(transformArticle).filter((a): a is NewsArticle => a !== null);
+
+        // Add search results to cache - this is crucial!
+        addToCache(articles);
+
+        return articles;
 
     } catch (error) {
         console.error('Error searching news:', error);
@@ -228,6 +258,10 @@ async function fallbackSearch(query: string, limit: number): Promise<NewsArticle
             .map(item => item.article);
 
         console.log(`Fallback search found ${results.length} results`);
+
+        // Add fallback results to cache too
+        addToCache(results);
+
         return results;
 
     } catch (error) {
@@ -246,37 +280,44 @@ async function fallbackSearch(query: string, limit: number): Promise<NewsArticle
  */
 export async function getNewsById(id: string): Promise<NewsArticle | null> {
     try {
+        // First, check the cache
+        if (articleCache.has(id) && isCacheValid()) {
+            console.log('Found article in cache:', id);
+            return articleCache.get(id) || null;
+        }
+
+        // If not in cache or cache is expired, fetch latest articles
+        console.log('Article not in cache, fetching latest articles');
         // Fetch latest articles with a reasonable limit to prevent memory issues
-        const latestArticles = await fetchLatestNews(50); // Reduced from 100
+        const latestArticles = await fetchLatestNews(100); // Increased from 50 to improve search coverage
+
         const article = latestArticles.find(article =>
             article.uuid === id ||
             article.uri === id ||
             article.url?.includes(id)
         );
 
-        return article || null;
+        if (article) {
+            console.log('Found article in latest articles:', id);
+            return article;
+        }
+
+        // If still not found, try searching the cache one more time
+        // in case it was added by a previous search
+        if (articleCache.has(id)) {
+            console.log('Found article in extended cache search:', id);
+            return articleCache.get(id) || null;
+        }
+
+        console.log('Article not found anywhere:', id);
+        return null;
     } catch (error) {
         console.error('Error fetching news by ID:', error);
         return null;
     }
 }
 
-/**
- * Transforms a raw article object from NewsAPI.ai into a standardized NewsArticle
- * object. This function is necessary because NewsAPI.ai returns articles in different
- * formats depending on the endpoint and query parameters.
- *
- *  "article" is  A raw article object from NewsAPI.ai
- * and it returns A standardized/transformed NewsArticle object, or null if the article is invalid
- */
-/**
- * Transforms a raw article object from NewsAPI.ai into a standardized NewsArticle
- * object. This function is necessary because NewsAPI.ai returns articles in different
- * formats depending on the endpoint and query parameters.
- *
- *  "article" is  A raw article object from NewsAPI.ai
- * and it returns A standardized/transformed NewsArticle object, or null if the article is invalid
- */
+
 /**
  * Transforms a raw article object from NewsAPI.ai into a standardized NewsArticle
  * object. This function is necessary because NewsAPI.ai returns articles in different
@@ -292,8 +333,15 @@ function transformArticle(article: unknown): NewsArticle | null {
 
     try {
         // NewsAPI.ai articles might have different field names
+        // Create a more consistent UUID
+        const uuid = (articleObj.uri as string) ||
+            (articleObj.id as string) ||
+            (articleObj.uuid as string) ||
+            `${Date.now()}-${Math.random()}`;
+
         const transformed: NewsArticle = {
-            uuid: (articleObj.uri as string) || (articleObj.id as string) || (articleObj.uuid as string) || `${Date.now()}-${Math.random()}`,
+            uuid: uuid,
+            uri: (articleObj.uri as string) || uuid, // Store original URI for better matching
             title: (articleObj.title as string) || (articleObj.headline as string) || 'Untitled',
             description: (articleObj.body as string) || (articleObj.description as string) || (articleObj.summary as string) || '',
             keywords: (articleObj.keywords as string) || (articleObj.tags as string[])?.join(', ') || '',

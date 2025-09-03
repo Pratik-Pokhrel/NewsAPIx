@@ -1,31 +1,32 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 
-const NavBar: React.FC = () => {
+
+const NavBar: React.FC = React.memo(() => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const router = useRouter();
 
   // Here is the search parameter q , whose value is extracted in .\search\page.tsx
-  const handleSearch = () => {
+  const handleSearch = useCallback(() => {
     if (searchTerm.trim()) {
       router.push(`/news/search?q=${encodeURIComponent(searchTerm.trim())}`);
       setSearchTerm('');
     }
-  };
+  }, [router, searchTerm]);
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyPress = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       handleSearch();
     }
-  };
+  }, [handleSearch]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
-  };
+  }, []);
 
   return (
     <nav className="bg-gradient-to-r from-slate-900 via-purple-900 to-slate-900 shadow-2xl border-b border-purple-500/20 sticky top-0 z-50 backdrop-blur-lg">
@@ -61,9 +62,11 @@ const NavBar: React.FC = () => {
                 type="text"
                 value={searchTerm}
                 onChange={handleInputChange}
-                onKeyPress={handleKeyPress}
+                onKeyDown={handleKeyPress}
                 className="block w-full pl-10 pr-3 py-2 border border-purple-500/30 rounded-lg leading-5 bg-slate-800/50 backdrop-blur-sm placeholder-gray-400 text-white focus:outline-none focus:placeholder-gray-300 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-400 sm:text-sm transition-all duration-200 hover:bg-slate-800/70 hover:border-purple-400/50"
                 placeholder="Search news by keywords..."
+                aria-label="Search news by keywords"
+                autoComplete="off"
               />
               <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-cyan-500/10 to-purple-500/10 opacity-0 group-focus-within:opacity-100 transition-opacity duration-200 pointer-events-none"></div>
             </div>
@@ -86,5 +89,6 @@ const NavBar: React.FC = () => {
       </div>
     </nav>
   );
-};
+});
+NavBar.displayName = 'NavBar';
 export default NavBar;

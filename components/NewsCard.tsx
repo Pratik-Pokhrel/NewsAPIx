@@ -1,5 +1,6 @@
+
 'use client';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { NewsArticle } from '@/lib/types';
@@ -9,7 +10,8 @@ interface NewsCardProps {
     article: NewsArticle;
 }
 
-const NewsCard: React.FC<NewsCardProps> = ({ article }) => {
+
+const NewsCard: React.FC<NewsCardProps> = React.memo(({ article }) => {
     const [imageError, setImageError] = useState(false);
 
     if (!article) {
@@ -20,22 +22,25 @@ const NewsCard: React.FC<NewsCardProps> = ({ article }) => {
         );
     }
 
-    /**
-     * Truncates a string to a given maximum length and appends an ellipsis if the string is longer than the maximum length.
-     * returns The truncated string
-     */
-    
     const truncateText = (text: string, maxLength: number): string => {
         if (!text || text.length <= maxLength) return text || '';
         return text.slice(0, maxLength) + '...';
     };
 
+    // Debug: Log the IDs used in the link
+    if (typeof window !== 'undefined') {
+        // eslint-disable-next-line no-console
+        console.log('NewsCard link:', {
+            uuid: article.uuid,
+            uri: (article as any).uri,
+            url: article.url
+        });
+    }
 
     return (
         <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden">
             <Link href={`/news/detail/${article.uuid}`}>
                 <div className="cursor-pointer">
-
                     {/* Image of the article ----> HERE */}
                     <div className="relative h-48 w-full">
                         {article.image_url && !imageError ? (
@@ -56,28 +61,20 @@ const NewsCard: React.FC<NewsCardProps> = ({ article }) => {
                             </div>
                         )}
                     </div>
-
-
                     {/* Source and Date of the Article ----> HERE */}
                     <div className="p-6">
                         <div className="flex items-center justify-between text-sm text-gray-500 mb-2">
                             <span className="font-medium">{article.source || 'Unknown Source'}</span>
                             <span>{formatDate(article.published_at)}</span>
                         </div>
-
-
                         {/* Title of the Article ----> HERE */}
                         <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2 hover:text-blue-600 transition-colors">
                             {truncateText(article.title || 'Untitled', 100)}
                         </h3>
-
-
                         {/* Description of the Article ----> HERE*/}
                         <p className="text-gray-600 text-sm mb-3 line-clamp-3">
                             {truncateText(article.description || article.snippet || 'No description available', 150)}
                         </p>
-
-
                         {/* Categories of the Article ----> HERE */}
                         {article.categories && article.categories.length > 0 && (
                             <div className="flex flex-wrap gap-2 mb-3">
@@ -91,7 +88,6 @@ const NewsCard: React.FC<NewsCardProps> = ({ article }) => {
                                 ))}
                             </div>
                         )}
-
                         {/* Read More Link */}
                         <div className="flex items-center text-blue-600 hover:text-blue-800 font-medium text-sm">
                             Read more
@@ -104,6 +100,7 @@ const NewsCard: React.FC<NewsCardProps> = ({ article }) => {
             </Link>
         </div>
     );
-};
+});
 
+NewsCard.displayName = 'NewsCard';
 export default NewsCard;

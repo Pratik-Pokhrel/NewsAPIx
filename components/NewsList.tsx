@@ -8,12 +8,9 @@ interface NewsListProps {
     emptyMessage?: string;
 }
 
-const NewsList: React.FC<NewsListProps> = ({
-    articles,
-    title,
-    emptyMessage = 'No news articles found.'
-}) => {
+import React from 'react';
 
+const NewsList: React.FC<NewsListProps> = React.memo(({ articles, title, emptyMessage = 'No news articles found.' }) => {
     if (!articles || !Array.isArray(articles) || articles.length === 0) {
         return (
             <div className="text-center py-12">
@@ -42,6 +39,7 @@ const NewsList: React.FC<NewsListProps> = ({
             </div>
         </div>
     );
-};
+});
 
+NewsList.displayName = 'NewsList';
 export default NewsList;
