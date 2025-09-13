@@ -13,7 +13,7 @@ npm install
 
 To fetch the news, login to newsapi.ai and get your API key
 
-Make a new file, .env.local file to your root project and assign your API key to the variable, NEXT_PUBLIC_NEWS_API_KEY
+Then, checkout `.env.example` file
 
 
 ## Usage
